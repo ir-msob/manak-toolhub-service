@@ -1,0 +1,51 @@
+package ir.msob.manak.toolhub.toolprovider;
+
+import ir.msob.jima.core.commons.resource.BaseResource;
+import ir.msob.jima.core.test.CoreTestData;
+import ir.msob.manak.core.model.jima.security.User;
+import ir.msob.manak.core.test.jima.crud.kafka.domain.DomainCrudKafkaListenerTest;
+import ir.msob.manak.domain.model.toolhub.toolprovider.ToolProvider;
+import ir.msob.manak.domain.model.toolhub.toolprovider.ToolProviderCriteria;
+import ir.msob.manak.domain.model.toolhub.toolprovider.ToolProviderDto;
+import ir.msob.manak.domain.model.toolhub.toolprovider.ToolProviderTypeReference;
+import ir.msob.manak.toolhub.Application;
+import ir.msob.manak.toolhub.ContainerConfiguration;
+import lombok.SneakyThrows;
+import lombok.extern.apachecommons.CommonsLog;
+import org.bson.types.ObjectId;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+@SpringBootTest(classes = {Application.class, ContainerConfiguration.class}, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Testcontainers
+@CommonsLog
+public class ToolProviderKafkaListenerIT
+        extends DomainCrudKafkaListenerTest<ToolProvider, ToolProviderDto, ToolProviderCriteria, ToolProviderRepository, ToolProviderService, ToolProviderDataProvider>
+        implements ToolProviderTypeReference {
+
+    @SneakyThrows
+    @BeforeAll
+    public static void beforeAll() {
+        CoreTestData.init(new ObjectId(), new ObjectId());
+    }
+
+    @SneakyThrows
+    @BeforeEach
+    public void beforeEach() {
+        getDataProvider().cleanups();
+        ToolProviderDataProvider.createMandatoryNewDto();
+        ToolProviderDataProvider.createNewDto();
+    }
+
+    @Override
+    public Class<? extends BaseResource<String, User>> getResourceClass() {
+        return ToolProviderKafkaListener.class;
+    }
+
+    @Override
+    public String getBaseUri() {
+        return ToolProviderKafkaListener.BASE_URI;
+    }
+}
