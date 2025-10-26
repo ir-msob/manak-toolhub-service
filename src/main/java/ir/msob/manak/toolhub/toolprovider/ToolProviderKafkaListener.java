@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 import static ir.msob.jima.core.commons.operation.Operations.*;
 
 @Component
-@ConditionalOnOperation(operations = {SAVE, UPDATE_BY_ID, DELETE_BY_ID})
+@ConditionalOnOperation(operations = {SAVE})
 @Resource(value = ToolProvider.DOMAIN_NAME_WITH_HYPHEN, type = ResourceType.KAFKA)
 public class ToolProviderKafkaListener
         extends DomainCrudKafkaListener<ToolProvider, ToolProviderDto, ToolProviderCriteria, ToolProviderRepository, ToolProviderService>

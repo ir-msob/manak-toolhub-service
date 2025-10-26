@@ -1,6 +1,7 @@
 package ir.msob.manak.toolhub.toolprovider;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import ir.msob.jima.core.commons.filter.Filter;
 import ir.msob.jima.core.commons.id.BaseIdService;
 import ir.msob.jima.core.commons.operation.BaseBeforeAfterDomainOperation;
 import ir.msob.jima.crud.service.domain.BeforeAfterComponent;
@@ -83,5 +84,18 @@ public class ToolProviderService extends DomainCrudService<ToolProvider, ToolPro
     public Mono<Void> postDelete(ToolProviderDto dto, ToolProviderCriteria criteria, User user) {
         toolProviderCacheService.updateCache(user);
         return super.postDelete(dto, criteria, user);
+    }
+
+    @Override
+    public Mono<Void> preSave(ToolProviderDto dto, User user) {
+        deleteIfExists(dto, user);
+        return super.preSave(dto, user);
+    }
+
+    private void deleteIfExists(ToolProviderDto dto, User user) {
+        ToolProviderCriteria criteria = ToolProviderCriteria.builder()
+                .name(Filter.eq(dto.getName()))
+                .build();
+        this.delete(criteria, user);
     }
 }

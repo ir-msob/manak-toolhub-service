@@ -54,11 +54,10 @@ public class GatewayService {
 
         return webClient.post()
                 .uri(url)
-                .bodyValue(request.getParams())
+                .bodyValue(request)
                 .retrieve()
-                .bodyToMono(Object.class)
+                .bodyToMono(InvokeResponse.class)
                 .timeout(jimaProperties.getClient().getRequestTimeout())
-                .map(result -> buildSuccess(toolId, result))
                 .onErrorResume(e -> buildError(toolId, e));
     }
 
@@ -70,13 +69,6 @@ public class GatewayService {
         return base.endsWith("/") ?
                 base + endpoint.replaceFirst("^/", "") :
                 base + (endpoint.startsWith("/") ? endpoint : "/" + endpoint);
-    }
-
-    private InvokeResponse buildSuccess(String toolId, Object result) {
-        return InvokeResponse.builder()
-                .toolId(toolId)
-                .result(result)
-                .build();
     }
 
     private Mono<InvokeResponse> buildError(String toolId, Throwable e) {
