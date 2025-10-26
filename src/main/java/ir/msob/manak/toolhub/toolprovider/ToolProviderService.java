@@ -70,32 +70,33 @@ public class ToolProviderService extends DomainCrudService<ToolProvider, ToolPro
 
     @Override
     public Mono<Void> postSave(ToolProviderDto dto, ToolProvider savedDomain, User user) {
-        toolProviderCacheService.updateCache(user);
+        toolProviderCacheService.setToolProviders(getStream(new ToolProviderCriteria(), user));
         return super.postSave(dto, savedDomain, user);
     }
 
     @Override
     public Mono<Void> postUpdate(ToolProviderDto dto, ToolProvider updatedDomain, User user) {
-        toolProviderCacheService.updateCache(user);
+        toolProviderCacheService.setToolProviders(getStream(new ToolProviderCriteria(), user));
         return super.postUpdate(dto, updatedDomain, user);
     }
 
     @Override
     public Mono<Void> postDelete(ToolProviderDto dto, ToolProviderCriteria criteria, User user) {
-        toolProviderCacheService.updateCache(user);
+        toolProviderCacheService.setToolProviders(getStream(new ToolProviderCriteria(), user));
         return super.postDelete(dto, criteria, user);
     }
 
     @Override
     public Mono<Void> preSave(ToolProviderDto dto, User user) {
-        deleteIfExists(dto, user);
-        return super.preSave(dto, user);
+        return deleteIfExists(dto, user)
+                .then(super.preSave(dto, user));
     }
 
-    private void deleteIfExists(ToolProviderDto dto, User user) {
+    private Mono<Void> deleteIfExists(ToolProviderDto dto, User user) {
         ToolProviderCriteria criteria = ToolProviderCriteria.builder()
                 .name(Filter.eq(dto.getName()))
                 .build();
-        this.delete(criteria, user);
+        return this.deleteMany(criteria, user)
+                .then();
     }
 }

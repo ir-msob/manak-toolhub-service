@@ -1,12 +1,9 @@
 package ir.msob.manak.toolhub.toolprovider;
 
-import ir.msob.manak.core.model.jima.security.User;
-import ir.msob.manak.core.service.jima.security.UserService;
-import ir.msob.manak.domain.model.toolhub.toolprovider.ToolProviderCriteria;
 import ir.msob.manak.domain.model.toolhub.toolprovider.ToolProviderDto;
-import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -14,15 +11,9 @@ import reactor.core.publisher.Mono;
 @Service
 @RequiredArgsConstructor
 public class ToolProviderCacheService {
-    private final ToolProviderService toolProviderService;
-    private final UserService userService;
     @Getter
+    @Setter
     private Flux<ToolProviderDto> toolProviders;
-
-    public synchronized void updateCache(User user) {
-        toolProviders = null;
-        toolProviders = toolProviderService.getStream(new ToolProviderCriteria(), user);
-    }
 
     public synchronized Mono<ToolProviderDto> getByToolId(String toolId) {
         return getToolProviders()
@@ -33,8 +24,5 @@ public class ToolProviderCacheService {
                 .next();
     }
 
-    @PostConstruct
-    public void init() {
-        this.updateCache(userService.getSystemUser());
-    }
+
 }
