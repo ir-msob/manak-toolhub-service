@@ -2,7 +2,6 @@ package ir.msob.manak.toolhub.registry;
 
 import ir.msob.manak.core.model.jima.security.User;
 import ir.msob.manak.domain.model.toolhub.dto.ToolDto;
-import ir.msob.manak.domain.model.toolhub.toolprovider.ToolProvider;
 import ir.msob.manak.domain.model.toolhub.toolprovider.ToolProviderDto;
 import ir.msob.manak.toolhub.toolprovider.ToolProviderCacheService;
 import ir.msob.manak.toolhub.toolprovider.ToolProviderService;
@@ -22,14 +21,6 @@ public class RegistryService {
     }
 
     public Flux<ToolDto> getStream(User user) {
-        return toolProviderCacheService.getToolProviders()
-                .flatMapIterable(ToolProvider::getTools)
-                .map(td -> ToolDto.builder()
-                        .name(td.getName())
-                        .description(td.getDescription())
-                        .inputSchema(td.getInputSchema())
-                        .outputSchema(td.getOutputSchema())
-                        .version(td.getVersion())
-                        .build());
+        return toolProviderCacheService.getStream(user);
     }
 }
