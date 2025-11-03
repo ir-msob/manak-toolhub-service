@@ -13,8 +13,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.util.UriBuilder;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.util.concurrent.TimeoutException;
 
 @Service
@@ -53,17 +55,20 @@ public class GatewayService {
         logger.info("Request dispatch → tool [{}], provider [{}], url [{}]", toolId, provider.getName(), url);
 
         return webClient.post()
-                .uri(url)
+                .uri(uriBuilder -> uriBuilder(uriBuilder,provider))
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(InvokeResponse.class)
-                .timeout(jimaProperties.getClient().getRequestTimeout())
                 .onErrorResume(e -> buildError(toolId, e));
     }
 
     // =========================
     // 🔧 Helper Methods
     // =========================
+
+    public  URI uriBuilder(UriBuilder builder, ToolProviderDto provider) {
+            return builder.host(provider.getBaseUrl()).path(provider.getEndpoint()).build();
+    }
 
     private String normalizeUrl(String base, String endpoint) {
         return base.endsWith("/") ?
