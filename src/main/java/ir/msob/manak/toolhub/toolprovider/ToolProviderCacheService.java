@@ -24,7 +24,7 @@ public class ToolProviderCacheService {
         return getToolProviders()
                 .filterWhen(provider ->
                         Flux.fromIterable(provider.getTools())
-                                .any(tool -> tool.getName().equalsIgnoreCase(toolId))
+                                .any(tool -> tool.getKey().equalsIgnoreCase(toolId))
                 )
                 .next();
     }
@@ -33,11 +33,11 @@ public class ToolProviderCacheService {
         return getToolProviders()
                 .flatMapIterable(ToolProvider::getTools)
                 .map(td -> ToolDto.builder()
-                        .name(td.getName())
-                        .key(td.getKey())
+                        .toolId(td.getKey())
                         .description(td.getDescription())
-                        .inputSchema(td.getInputSchema())
-                        .outputSchema(td.getOutputSchema())
+                        .inputSchema(td.getInputSchema().getParams())
+                        .outputSchema(td.getOutputSchema().getRes())
+                        .errorSchema(td.getOutputSchema().getError())
                         .version(td.getVersion())
                         .build());
     }
