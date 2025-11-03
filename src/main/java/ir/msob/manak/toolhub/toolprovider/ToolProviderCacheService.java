@@ -34,6 +34,7 @@ public class ToolProviderCacheService {
                 .flatMapIterable(ToolProvider::getTools)
                 .map(td -> ToolDto.builder()
                         .name(td.getName())
+                        .key(td.getKey())
                         .description(td.getDescription())
                         .inputSchema(td.getInputSchema())
                         .outputSchema(td.getOutputSchema())
