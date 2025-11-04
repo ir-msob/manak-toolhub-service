@@ -1,6 +1,5 @@
 package ir.msob.manak.toolhub.gateway;
 
-import ir.msob.jima.core.beans.properties.JimaProperties;
 import ir.msob.jima.core.commons.logger.Logger;
 import ir.msob.jima.core.commons.logger.LoggerFactory;
 import ir.msob.jima.core.commons.methodstats.MethodStats;
@@ -8,23 +7,20 @@ import ir.msob.manak.core.model.jima.security.User;
 import ir.msob.manak.domain.model.toolhub.dto.InvokeRequest;
 import ir.msob.manak.domain.model.toolhub.dto.InvokeResponse;
 import ir.msob.manak.domain.model.toolhub.toolprovider.ToolProviderDto;
+import ir.msob.manak.domain.service.toolhub.util.ToolExecutorUtil;
 import ir.msob.manak.toolhub.toolprovider.ToolProviderCacheService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-import org.springframework.web.util.UriBuilder;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
-import java.util.concurrent.TimeoutException;
 
 @Service
 @RequiredArgsConstructor
 public class GatewayService {
 
     private static final Logger logger = LoggerFactory.getLogger(GatewayService.class);
-    private final JimaProperties jimaProperties;
 
     private final ToolProviderCacheService toolProviderCacheService;
     private final WebClient webClient;
@@ -50,12 +46,11 @@ public class GatewayService {
     @MethodStats
     private Mono<InvokeResponse> request(ToolProviderDto provider, InvokeRequest request) {
         String toolId = request.getToolId();
-        String url = normalizeUrl(provider.getBaseUrl(), provider.getEndpoint());
 
-        logger.info("Request dispatch → tool [{}], provider [{}], url [{}]", toolId, provider.getName(), url);
+        logger.info("Request dispatch → tool [{}], provider [{}]", toolId, provider.getName());
 
         return webClient.post()
-                .uri(uriBuilder -> uriBuilder(uriBuilder,provider))
+                .uri(uriBuilder -> uriBuilder(uriBuilder, provider))
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(InvokeResponse.class)
@@ -66,27 +61,22 @@ public class GatewayService {
     // 🔧 Helper Methods
     // =========================
 
-    public  URI uriBuilder(UriBuilder builder, ToolProviderDto provider) {
-            return builder.host(provider.getBaseUrl()).path(provider.getEndpoint()).build();
-    }
-
-    private String normalizeUrl(String base, String endpoint) {
-        return base.endsWith("/") ?
-                base + endpoint.replaceFirst("^/", "") :
-                base + (endpoint.startsWith("/") ? endpoint : "/" + endpoint);
+    private URI uriBuilder(org.springframework.web.util.UriBuilder builder, ToolProviderDto provider) {
+        return builder.host(provider.getBaseUrl()).path(provider.getEndpoint()).build();
     }
 
     private Mono<InvokeResponse> buildError(String toolId, Throwable e) {
-        String msg = resolveErrorMessage(e);
-        logger.error(e, "Error invoking tool [{}]: {}", toolId, msg);
-        return buildError(toolId, msg);
+        String errorMsg = ToolExecutorUtil.resolveErrorMessage(e);
+        logger.error(e, "Error invoking tool [{}]: {}", toolId, errorMsg);
+        return buildError(toolId, errorMsg);
     }
 
     private Mono<InvokeResponse> buildError(String toolId, String message) {
-        logger.warn("Returning error for tool [{}]: {}", toolId, message);
+        String formattedMessage = ToolExecutorUtil.buildErrorResponse(toolId, message);
+        logger.warn("Returning error for tool [{}]: {}", toolId, formattedMessage);
         return Mono.just(InvokeResponse.builder()
                 .toolId(toolId)
-                .error(message)
+                .error(formattedMessage)
                 .build());
     }
 
@@ -95,16 +85,5 @@ public class GatewayService {
             logger.debug("Invocation completed successfully for tool [{}]", toolId);
         else
             logger.warn("Invocation completed with error for tool [{}]: {}", toolId, response.getError());
-    }
-
-    private String resolveErrorMessage(Throwable e) {
-        return switch (e) {
-            case WebClientResponseException wcre ->
-                    String.format("HTTP %s: %s", wcre.getStatusCode(), wcre.getResponseBodyAsString());
-            case TimeoutException ignored ->
-                    "Request timed out after " + jimaProperties.getClient().getRequestTimeout().toSeconds() + " seconds";
-            case IllegalArgumentException iae -> "Invalid request: " + iae.getMessage();
-            default -> e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-        };
     }
 }
