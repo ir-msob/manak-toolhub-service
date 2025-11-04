@@ -62,7 +62,7 @@ public class GatewayService {
     // =========================
 
     private URI uriBuilder(org.springframework.web.util.UriBuilder builder, ToolProviderDto provider) {
-        return builder.host(provider.getBaseUrl()).path(provider.getEndpoint()).build();
+        return builder.host(provider.getServiceName()).path(provider.getEndpoint()).build();
     }
 
     private Mono<InvokeResponse> buildError(String toolId, Throwable e) {
