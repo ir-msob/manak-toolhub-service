@@ -56,7 +56,7 @@ public class ToolProviderDataProvider extends DomainCrudDataProvider<ToolProvide
     public static ToolProviderDto prepareMandatoryDto() {
         ToolProviderDto dto = new ToolProviderDto();
         dto.setName(DEFAULT_STRING);
-        dto.setBaseUrl(DEFAULT_STRING);
+        dto.setServiceName(DEFAULT_STRING);
         return dto;
     }
 
