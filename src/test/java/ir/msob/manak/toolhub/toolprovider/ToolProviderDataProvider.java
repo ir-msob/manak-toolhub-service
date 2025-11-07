@@ -61,7 +61,6 @@ public class ToolProviderDataProvider extends DomainCrudDataProvider<ToolProvide
     }
 
     /**
-     * @throws JsonPointerException if there is an error creating the JSON patch.
      */
     @Override
     @SneakyThrows
@@ -72,7 +71,6 @@ public class ToolProviderDataProvider extends DomainCrudDataProvider<ToolProvide
     }
 
     /**
-     * @throws JsonPointerException if there is an error creating the JSON patch.
      */
     @Override
     @SneakyThrows

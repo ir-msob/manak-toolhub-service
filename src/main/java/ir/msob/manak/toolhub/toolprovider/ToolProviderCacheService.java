@@ -1,7 +1,7 @@
 package ir.msob.manak.toolhub.toolprovider;
 
 import ir.msob.manak.core.model.jima.security.User;
-import ir.msob.manak.domain.model.toolhub.dto.ToolDto;
+import ir.msob.manak.domain.model.toolhub.dto.ToolRegistryDto;
 import ir.msob.manak.domain.model.toolhub.toolprovider.ToolProvider;
 import ir.msob.manak.domain.model.toolhub.toolprovider.ToolProviderDto;
 import lombok.Getter;
@@ -29,10 +29,10 @@ public class ToolProviderCacheService {
                 .next();
     }
 
-    public Flux<ToolDto> getStream(User user) {
+    public Flux<ToolRegistryDto> getStream(User user) {
         return getToolProviders()
                 .flatMapIterable(ToolProvider::getTools)
-                .map(td -> ToolDto.builder()
+                .map(td -> ToolRegistryDto.builder()
                         .toolId(td.getKey())
                         .description(td.getDescription())
                         .inputSchema(td.getInputSchema().getParams())

@@ -5,7 +5,7 @@ import ir.msob.jima.core.commons.logger.LoggerFactory;
 import ir.msob.jima.core.commons.operation.OperationsStatus;
 import ir.msob.manak.core.model.jima.security.User;
 import ir.msob.manak.core.service.jima.security.UserService;
-import ir.msob.manak.domain.model.toolhub.dto.ToolDto;
+import ir.msob.manak.domain.model.toolhub.dto.ToolRegistryDto;
 import ir.msob.manak.domain.model.toolhub.toolprovider.ToolProviderDto;
 import ir.msob.manak.toolhub.gateway.GatewayService;
 import lombok.RequiredArgsConstructor;
@@ -35,10 +35,10 @@ public class RegistryRestResource {
     }
 
     @GetMapping
-    public ResponseEntity<Flux<ToolDto>> getStream(Principal principal) {
+    public ResponseEntity<Flux<ToolRegistryDto>> getStream(Principal principal) {
         logger.info("REST request to get stream of provider");
         User user = userService.getUser(principal);
-        Flux<ToolDto> res = service.getStream(user);
+        Flux<ToolRegistryDto> res = service.getStream(user);
         return ResponseEntity.status(OperationsStatus.GET_STREAM).body(res);
     }
 }
