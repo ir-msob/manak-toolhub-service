@@ -15,6 +15,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.time.Instant;
+import java.util.Arrays;
 
 @Service
 @RequiredArgsConstructor
@@ -35,8 +37,8 @@ public class GatewayService {
 
         return toolProviderCacheService.getByToolId(toolId)
                 .flatMap(provider -> request(provider, dto))
-                .switchIfEmpty(buildError(toolId, "Tool not found: " + toolId))
-                .onErrorResume(e -> buildError(toolId, e))
+                .switchIfEmpty(buildError(dto, "Tool not found: " + toolId))
+                .onErrorResume(e -> buildError(dto, e))
                 .doOnSuccess(resp -> logResult(toolId, resp));
     }
 
@@ -54,7 +56,7 @@ public class GatewayService {
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(InvokeResponse.class)
-                .onErrorResume(e -> buildError(toolId, e));
+                .onErrorResume(e -> buildError(request, e));
     }
 
     // =========================
@@ -65,18 +67,31 @@ public class GatewayService {
         return builder.host(provider.getServiceName()).path(provider.getEndpoint()).build();
     }
 
-    private Mono<InvokeResponse> buildError(String toolId, Throwable e) {
+    private Mono<InvokeResponse> buildError(InvokeRequest dto, Throwable e) {
         String errorMsg = ToolExecutorUtil.resolveErrorMessage(e);
-        logger.error(e, "Error invoking tool [{}]: {}", toolId, errorMsg);
-        return buildError(toolId, errorMsg);
+        logger.error(e, "Error invoking tool [{}]: {}", dto.getToolId(), errorMsg);
+        return buildErrorResponse(dto, errorMsg, e.getStackTrace());
     }
 
-    private Mono<InvokeResponse> buildError(String toolId, String message) {
+    private Mono<InvokeResponse> buildError(InvokeRequest dto, String message) {
+        logger.warn("Returning error for tool [{}]: {}", dto.getToolId(), message);
+        return buildErrorResponse(dto, message, null);
+    }
+
+    private Mono<InvokeResponse> buildErrorResponse(InvokeRequest dto, String message, StackTraceElement[] stackTrace) {
+        String toolId = dto.getToolId();
         String formattedMessage = ToolExecutorUtil.buildErrorResponse(toolId, message);
-        logger.warn("Returning error for tool [{}]: {}", toolId, formattedMessage);
+
         return Mono.just(InvokeResponse.builder()
+                .id(dto.getId())
                 .toolId(toolId)
-                .error(formattedMessage)
+                .error(InvokeResponse.ErrorInfo.builder()
+                        .code("EXECUTION_ERROR")
+                        .message(formattedMessage)
+                        .stackTrace(stackTrace != null ? Arrays.toString(stackTrace) : null)
+                        .details(dto.getParameters())
+                        .build())
+                .executedAt(Instant.now())
                 .build());
     }
 
